@@ -8,7 +8,6 @@ from google import genai
 # --- 1. SETTINGS & STYLING ---
 st.set_page_config(page_title="BP Remediation Sentinel", layout="wide")
 
-# FIX: Changed to st.html or corrected st.markdown syntax
 st.html("""
     <style>
     .main { background-color: #f5f7f9; }
@@ -23,7 +22,6 @@ st.html("""
     """)
 
 # --- 2. API CONFIGURATION ---
-# Accessing secrets from the Streamlit Cloud dashboard
 if "GEMINI_API_KEY" not in st.secrets:
     st.error("🚨 GEMINI_API_KEY not found in Secrets! Please add it in the Streamlit Cloud 'Advanced Settings'.")
     st.stop()
@@ -57,8 +55,8 @@ def agent_researcher(user_query, context_data):
     {user_query}
     """
     try:
-        # Using Gemini 1.5 Flash for high speed and reliability
-        response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
+        # FIX: Updated model name to gemini-2.5-flash to match the library's expectations
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
         return response.text
     except Exception as e:
         return f"AI Research Error: {str(e)}"
@@ -73,22 +71,20 @@ def agent_auditor(draft, raw_data):
     DRAFT REPORT: {draft}
     """
     try:
-        response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
+        # FIX: Updated model name to gemini-2.5-flash
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
         return response.text
     except Exception as e:
         return f"AI Audit Error: {str(e)}"
 
-# --- 5. NATIVE PYTHON SCRAPER (Streamlit Cloud Compatible) ---
+# --- 5. NATIVE PYTHON SCRAPER ---
 def scrape_webpage(url):
-    """Uses BeautifulSoup to extract text without needing Linux browser drivers."""
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) BP-Compliance-Agent/1.0'}
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Pull text from headings and paragraphs
         text_elements = soup.find_all(['h1', 'h2', 'h3', 'p', 'li'])
         content = "\n".join([elem.get_text(strip=True) for elem in text_elements])
         
@@ -99,7 +95,6 @@ def scrape_webpage(url):
 # --- 6. USER INTERFACE ---
 st.sidebar.title("🛢️ BP Remediation Hub")
 
-# Sidebar selection
 df_sites = run_query("SELECT DISTINCT facility FROM sites")
 all_sites = df_sites['facility'].tolist() if not df_sites.empty else []
 selected_site = st.sidebar.selectbox("Focus Facility", ["All Sites"] + all_sites)
@@ -124,7 +119,6 @@ with tab1:
             with st.spinner("Agent is researching and auditing data..."):
                 raw_json = context_df.to_json()
                 
-                # Double-Agent Workflow
                 draft = agent_researcher(user_input, raw_json)
                 audited_report = agent_auditor(draft, raw_json)
                 
@@ -171,4 +165,4 @@ with tab3:
                     st.write(summary)
 
 st.sidebar.markdown("---")
-st.sidebar.caption("BP Remediation Sentinel v3.1 | Python 3.14")
+st.sidebar.caption("BP Remediation Sentinel v3.2")

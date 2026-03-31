@@ -1,5 +1,5 @@
-streamlit>=1.40.0
+streamlit
 pandas
-google-genai>=0.5.0
+google-genai
 requests
 beautifulsoup4
